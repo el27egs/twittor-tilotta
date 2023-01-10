@@ -12,7 +12,11 @@ import (
 
 func StartServer() {
 	router := mux.NewRouter()
-	router.HandleFunc("/registro", middlew.CheckDatabaseConnection(routers.CreateUser)).Methods("POST")
+
+	router.HandleFunc("/registro", middlew.CheckDBConnection(routers.CreateUser)).Methods("POST")
+	router.HandleFunc("/login", middlew.CheckDBConnection(routers.Login)).Methods("POST")
+	router.HandleFunc("/verperfil", middlew.CheckDBConnection(middlew.ValidateJWT(routers.GetUser))).Methods("GET")
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

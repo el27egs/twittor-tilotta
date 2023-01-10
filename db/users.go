@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"github.com/el27egs/twittor-tilotta/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -44,4 +45,25 @@ func SaveUser(user models.User) (string, bool, error) {
 	}
 	ObjID, _ := result.InsertedID.(primitive.ObjectID)
 	return ObjID.String(), true, nil
+}
+
+func SearchUserByID(ID string) (models.User, error) {
+	timeoutCtx, cancelHandler := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancelHandler()
+
+	db := MongoConnection.Database("twittor")
+	collection := db.Collection("usuarios")
+
+	var useProfile = models.User{}
+	objID, _ := primitive.ObjectIDFromHex(ID)
+	predicate := bson.M{
+		"_id": objID,
+	}
+	err := collection.FindOne(timeoutCtx, predicate).Decode(&useProfile)
+	useProfile.Password = ""
+	if err != nil {
+		fmt.Println("Usuario no encontrado " + err.Error())
+		return models.User{}, err
+	}
+	return useProfile, nil
 }
