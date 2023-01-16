@@ -19,6 +19,12 @@ func StartServer() {
 	router.HandleFunc("/modificarperfil", middlew.CheckDBConnection(middlew.ValidateJWT(routers.UpdateUser))).Methods("PUT")
 	router.HandleFunc("/tweet", middlew.CheckDBConnection(middlew.ValidateJWT(routers.CreateTweet))).Methods("POST")
 	router.HandleFunc("/leoTweets", middlew.CheckDBConnection(middlew.ValidateJWT(routers.GetTweetsWithPager))).Methods("GET")
+	router.HandleFunc("/eliminarTweet", middlew.CheckDBConnection(middlew.ValidateJWT(routers.DeleteTweet))).Methods("DELETE")
+
+	router.HandleFunc("/subirAvatar", middlew.CheckDBConnection(middlew.ValidateJWT(routers.UploadAvatar))).Methods("POST")
+	router.HandleFunc("/obtenerAvatar", middlew.CheckDBConnection(middlew.ValidateJWT(routers.GetAvatar))).Methods("GET")
+	router.HandleFunc("/subirBanner", middlew.CheckDBConnection(middlew.ValidateJWT(routers.UploadBanner))).Methods("POST")
+	router.HandleFunc("/obtenerBanner", middlew.CheckDBConnection(middlew.ValidateJWT(routers.GetBanner))).Methods("GET")
 
 	port := os.Getenv("PORT")
 	if port == "" {

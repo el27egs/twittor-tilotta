@@ -5,7 +5,11 @@ import (
 	"fmt"
 	"github.com/el27egs/twittor-tilotta/db"
 	"github.com/el27egs/twittor-tilotta/models"
+	"io"
 	"net/http"
+	"os"
+	"strings"
+	"time"
 )
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -96,6 +100,129 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	if !status {
 		http.Error(w, "datos del usuario no se actualizacon, intente nuevamente mas tarde", 400)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func UploadAvatar(w http.ResponseWriter, r *http.Request) {
+
+	sourceFile, fileHeader, _ := r.FormFile("avatar")
+	var ext = strings.Split(fileHeader.Filename, ".")[1]
+	var targetFileName = IDUser + "." + ext
+	var targetPath = "uploads/avatars/" + targetFileName
+
+	targetFile, err := os.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		http.Error(w, "Error al subir la imagen"+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_, err = io.Copy(targetFile, sourceFile)
+	if err != nil {
+		http.Error(w, "Error al copia la imagen"+err.Error(), http.StatusBadRequest)
+		return
+	}
+	var user models.User
+	user.Avatar = targetFileName
+	_, err = db.UpdateUser(user, IDUser)
+
+	if err != nil {
+		http.Error(w, "Error al gravar la imagen en la BD"+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+}
+
+func UploadBanner(w http.ResponseWriter, r *http.Request) {
+	time.Sleep(10000 * time.Millisecond)
+	sourceFile, fileHeader, err := r.FormFile("banner")
+	if err != nil {
+		http.Error(w, "Error al enviar imagen al servidor"+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var ext = strings.Split(fileHeader.Filename, ".")[1]
+	var targetFileName = IDUser + "." + ext
+	var targetPath = "uploads/banners/" + targetFileName
+
+	targetFile, err := os.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		http.Error(w, "Error al subir la imagen"+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	_, err = io.Copy(targetFile, sourceFile)
+	if err != nil {
+		http.Error(w, "Error al copia la imagen"+err.Error(), http.StatusBadRequest)
+		return
+	}
+	var user models.User
+	user.Banner = targetFileName
+	_, err = db.UpdateUser(user, IDUser)
+
+	if err != nil {
+		http.Error(w, "Error al gravar la imagen en la BD"+err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+}
+
+func GetAvatar(w http.ResponseWriter, r *http.Request) {
+
+	userId := r.URL.Query().Get("id")
+	if len(userId) == 0 {
+		http.Error(w, "Id del usuario requerido", http.StatusBadRequest)
+		return
+	}
+
+	user, err := db.SearchUserByID(userId)
+	if err != nil {
+		http.Error(w, "Usuario no encontrado", http.StatusBadRequest)
+		return
+	}
+
+	file, err := os.Open("uploads/avatars/" + user.Avatar)
+	if err != nil {
+		http.Error(w, "Imagen no encontrada", http.StatusBadRequest)
+		return
+	}
+	_, err = io.Copy(w, file)
+	if err != nil {
+		http.Error(w, "Error al copiar la imagen", http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func GetBanner(w http.ResponseWriter, r *http.Request) {
+
+	userId := r.URL.Query().Get("id")
+	if len(userId) == 0 {
+		http.Error(w, "Id del usuario requerido", http.StatusBadRequest)
+		return
+	}
+
+	user, err := db.SearchUserByID(userId)
+	if err != nil {
+		http.Error(w, "Usuario no encontrado", http.StatusBadRequest)
+		return
+	}
+
+	file, err := os.Open("uploads/banners/" + user.Avatar)
+	if err != nil {
+		http.Error(w, "Imagen no encontrada", http.StatusBadRequest)
+		return
+	}
+	_, err = io.Copy(w, file)
+	if err != nil {
+		http.Error(w, "Error al copiar la imagen", http.StatusBadRequest)
 		return
 	}
 

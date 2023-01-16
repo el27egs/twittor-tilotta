@@ -63,3 +63,22 @@ func GetTweetsWithPager(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(tweets)
 
 }
+
+func DeleteTweet(w http.ResponseWriter, r *http.Request) {
+
+	tweetId := r.URL.Query().Get("id")
+	if len(tweetId) == 0 {
+		http.Error(w, "ID del Tweet es requerido", http.StatusBadRequest)
+		return
+	}
+
+	err := db.DeleteTweet(tweetId, IDUser)
+	if err != nil {
+		http.Error(w, "Error al borrar tweet "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNoContent)
+
+}

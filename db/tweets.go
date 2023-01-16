@@ -68,5 +68,20 @@ func GetTweetsWithPager(userId string, page int64) ([]*models.TweetResponse, boo
 		tweets = append(tweets, &tweet)
 	}
 	return tweets, true
+}
 
+func DeleteTweet(ID string, userId string) error {
+	timeoutCtx, cancelHandler := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancelHandler()
+
+	db := MongoConnection.Database("twittor")
+	collection := db.Collection("tweet")
+
+	tweetId, _ := primitive.ObjectIDFromHex(ID)
+	filter := bson.M{
+		"_id":    tweetId,
+		"userid": userId,
+	}
+	_, err := collection.DeleteOne(timeoutCtx, filter)
+	return err
 }
